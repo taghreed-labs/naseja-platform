@@ -1,0 +1,1059 @@
+<?php
+
+use App\Http\Controllers\Admin\Auth\AdminLoginController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\JoinRequestController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\SkillController;
+use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
+use App\Http\Controllers\Admin\PortfolioController as AdminPortfolioController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Admin\SearchController as AdminSearchController;
+
+use App\Http\Controllers\PublicProfileController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserSkillController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\PortfolioItemController;
+use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ExploreController;
+use App\Http\Controllers\ServiceOrderController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SeoController;
+
+use Illuminate\Support\Facades\Route;
+
+
+/*
+|--------------------------------------------------------------------------
+| الصفحة الرئيسية
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', function () {
+    return view('frontend.auth.welcome');
+})->name('home');
+
+Route::view('/welcome', 'frontend.auth.welcome')->name('welcome');
+
+
+/*
+|--------------------------------------------------------------------------
+| SEO
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/sitemap.xml',
+    [SeoController::class, 'sitemap']
+)
+    ->name('seo.sitemap');
+
+Route::get(
+    '/robots.txt',
+    [SeoController::class, 'robots']
+)
+    ->name('seo.robots');
+
+
+/*
+|--------------------------------------------------------------------------
+| Splash
+|--------------------------------------------------------------------------
+|
+| صفحة البداية الخاصة بإنشاء الحساب.
+|
+*/
+
+Route::get('/splash', function () {
+    return view('frontend.auth.splash');
+})->name('splash');
+
+
+/*
+|--------------------------------------------------------------------------
+| بدء التسجيل
+|--------------------------------------------------------------------------
+|
+| عندما يضغط الزائر على "إنشاء حساب"
+| يتم إرساله إلى صفحة الـ Splash.
+|
+*/
+
+Route::get('/start-register', function () {
+    return redirect()->route('splash');
+})
+    ->middleware('guest')
+    ->name('start-register');
+
+
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
+
+
+// صفحة التسجيل
+Route::get(
+    '/register',
+    [RegisterController::class, 'create']
+)
+    ->middleware('guest')
+    ->name('register');
+
+
+// تنفيذ التسجيل
+Route::post(
+    '/register',
+    [RegisterController::class, 'store']
+)
+    ->middleware('guest');
+
+
+// صفحة تسجيل الدخول
+Route::get(
+    '/login',
+    [LoginController::class, 'create']
+)
+    ->middleware('guest')
+    ->name('login');
+
+
+// تنفيذ تسجيل الدخول
+Route::post(
+    '/login',
+    [LoginController::class, 'store']
+)
+    ->middleware('guest');
+
+
+// تسجيل الخروج
+Route::post(
+    '/logout',
+    [LoginController::class, 'destroy']
+)
+    ->middleware('auth')
+    ->name('logout');
+
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+|
+| لوحة تحكم المستخدم.
+| البيانات يتم جلبها من DashboardController.
+|
+*/
+
+Route::get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)
+    ->middleware('auth')
+    ->name('dashboard');
+
+
+/*
+|--------------------------------------------------------------------------
+| الملف العام للمستخدم
+|--------------------------------------------------------------------------
+|
+| هذا الرابط عام:
+| الزائر يستطيع الدخول إليه.
+| المستخدم المسجل يستطيع الدخول إليه.
+|
+| لكن هذا الملف للعرض فقط.
+| لا توجد فيه صلاحيات تعديل أو حذف.
+|
+*/
+
+/*
+|--------------------------------------------------------------------------
+| الرابط القديم للملف العام
+|--------------------------------------------------------------------------
+|
+| أي رابط قديم مثل /users/3 لن يعطي 404.
+| يتم تحويله تلقائيًا إلى رابط الـ slug النهائي.
+|
+*/
+
+Route::get('/users/{user}', function (\App\Models\User $user) {
+
+    $profile = $user->profile;
+
+    if (!$profile) {
+        $profile = \App\Models\Profile::create([
+            'user_id' => $user->id,
+        ]);
+    }
+
+    if (empty($profile->slug)) {
+
+        $baseSlug = preg_replace(
+            '/[^\p{L}\p{N}]+/u',
+            '-',
+            trim($user->name)
+        );
+
+        $baseSlug = trim((string) $baseSlug, '-');
+        $baseSlug = mb_strtolower($baseSlug);
+
+        if ($baseSlug === '' || ctype_digit($baseSlug)) {
+            $baseSlug = 'member-' . strtolower(substr(md5($user->email), 0, 8));
+        }
+
+        $slug = $baseSlug;
+        $number = 2;
+
+        while (
+            \App\Models\Profile::where('slug', $slug)
+                ->where('id', '!=', $profile->id)
+                ->exists()
+        ) {
+            $slug = $baseSlug . '-' . $number;
+            $number++;
+        }
+
+        $profile->slug = $slug;
+        $profile->save();
+    }
+
+    return redirect()->route('users.show', [
+        'slug' => $profile->slug,
+    ]);
+
+})
+    ->whereNumber('user')
+    ->name('users.legacy');
+
+
+/*
+|--------------------------------------------------------------------------
+| الرابط الجديد للملف العام
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/profile/{slug}',
+    [PublicProfileController::class, 'show']
+)
+    ->name('users.show');
+
+
+/*
+|--------------------------------------------------------------------------
+| الاستكشاف
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/explore',
+    [ExploreController::class, 'index']
+)
+    ->name('explore');
+
+/*
+|--------------------------------------------------------------------------
+| NASEJA Skill Challenge
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/game',
+    [\App\Http\Controllers\GameController::class, 'index']
+)
+    ->name('game.index');
+
+
+/*
+|--------------------------------------------------------------------------
+| صفحة اختيار الإجراء للزائر
+|--------------------------------------------------------------------------
+|
+| تظهر عندما يضغط الزائر على ❤️
+| أو لاحقًا عند الضغط على 💬.
+|
+| يستطيع الزائر من هنا اختيار:
+|
+| - تسجيل الدخول
+| - إنشاء حساب جديد
+|
+*/
+
+Route::get('/auth/action-choice', function () {
+    return view('frontend.auth.action-choice');
+})
+    ->middleware('guest')
+    ->name('auth.action-choice');
+
+
+/*
+|--------------------------------------------------------------------------
+| إعجاب الزائر
+|--------------------------------------------------------------------------
+|
+| هذا المسار خارج auth حتى يستطيع الزائر الوصول إليه.
+|
+| FavoriteController هو الذي يقرر:
+|
+| - إذا كان زائرًا → يحفظ العملية مؤقتًا ويرسله لصفحة الاختيار.
+| - إذا كان مسجلًا → يسجل الإعجاب مباشرة.
+|
+*/
+
+Route::post(
+    '/favorites/{user}',
+    [FavoriteController::class, 'store']
+)
+    ->name('favorites.store');
+
+
+/*
+|--------------------------------------------------------------------------
+| الإبلاغ عن ملف عام: متاح للزائر وللمستخدم المسجل
+|--------------------------------------------------------------------------
+*/
+Route::post('/reports/users/{user}', [ReportController::class, 'store'])
+    ->name('reports.users.store');
+
+/*
+|--------------------------------------------------------------------------
+| صفحات المستخدم الخاصة
+|--------------------------------------------------------------------------
+|
+| كل ما داخل auth لا يستطيع الزائر الوصول إليه.
+|
+*/
+
+Route::middleware('auth')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | الملف الشخصي - خاص بصاحب الحساب
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'edit']
+    )
+        ->name('profile.edit');
+
+
+    Route::patch(
+        '/profile',
+        [ProfileController::class, 'update']
+    )
+        ->name('profile.update');
+
+
+    Route::delete(
+        '/profile',
+        [ProfileController::class, 'destroy']
+    )
+        ->name('profile.destroy');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | المهارات - خاصة بالمستخدم
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/skills',
+        [UserSkillController::class, 'index']
+    )
+        ->name('skills.index');
+
+
+    Route::post(
+        '/skills',
+        [UserSkillController::class, 'store']
+    )
+        ->name('skills.store');
+
+
+    Route::delete(
+        '/skills/{userSkill}',
+        [UserSkillController::class, 'destroy']
+    )
+        ->name('skills.destroy');
+
+
+    Route::get(
+        '/skills/{userSkill}/edit',
+        [UserSkillController::class, 'edit']
+    )
+        ->name('skills.edit');
+
+
+    Route::put(
+        '/skills/{userSkill}',
+        [UserSkillController::class, 'update']
+    )
+        ->name('skills.update');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | الخدمات - خاصة بالمستخدم
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'services',
+        ServiceController::class
+    )->only([
+        'index',
+        'store',
+        'edit',
+        'update',
+        'destroy',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | الأعمال - خاصة بالمستخدم
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/portfolio',
+        [PortfolioItemController::class, 'index']
+    )
+        ->name('portfolio.index');
+
+
+    Route::post(
+        '/portfolio',
+        [PortfolioItemController::class, 'store']
+    )
+        ->name('portfolio.store');
+
+
+    Route::get(
+        '/portfolio/{portfolioItem}/edit',
+        [PortfolioItemController::class, 'edit']
+    )
+        ->name('portfolio.edit');
+
+
+    Route::put(
+        '/portfolio/{portfolioItem}',
+        [PortfolioItemController::class, 'update']
+    )
+        ->name('portfolio.update');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | حذف صورة من العمل
+    |--------------------------------------------------------------------------
+    */
+
+    Route::delete(
+        '/portfolio/{portfolioItem}/images/{image}',
+        [PortfolioItemController::class, 'destroyImage']
+    )
+        ->name('portfolio.images.destroy');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | استبدال صورة
+    |--------------------------------------------------------------------------
+    */
+
+    Route::put(
+        '/portfolio/{portfolioItem}/images/{image}/replace',
+        [PortfolioItemController::class, 'replaceImage']
+    )
+        ->name('portfolio.images.replace');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | حذف العمل
+    |--------------------------------------------------------------------------
+    */
+
+    Route::delete(
+        '/portfolio/{portfolioItem}',
+        [PortfolioItemController::class, 'destroy']
+    )
+        ->name('portfolio.destroy');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | المفضلة
+    |--------------------------------------------------------------------------
+    |
+    | عرض المفضلة وحذف الإعجاب يحتاجان تسجيل دخول.
+    |
+    */
+
+    Route::get(
+        '/favorites',
+        [FavoriteController::class, 'index']
+    )
+        ->name('favorites.index');
+
+
+    Route::delete(
+        '/favorites/{user}',
+        [FavoriteController::class, 'destroy']
+    )
+        ->name('favorites.destroy');
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | طلبات الخدمات
+    |--------------------------------------------------------------------------
+    |
+    | العميل يستطيع إنشاء طلب ومشاهدة طلباته.
+    | صاحب المهارة يستطيع مشاهدة الطلبات الواردة إليه.
+    |
+    */
+
+    Route::get(
+        '/orders',
+        [ServiceOrderController::class, 'index']
+    )
+        ->name('orders.index');
+
+
+    Route::get(
+        '/orders/services/{service}/create',
+        [ServiceOrderController::class, 'create']
+    )
+        ->name('orders.create');
+
+
+    Route::post(
+        '/orders/services/{service}',
+        [ServiceOrderController::class, 'store']
+    )
+        ->name('orders.store');
+
+
+    Route::get(
+        '/provider/orders',
+        [ServiceOrderController::class, 'providerIndex']
+    )
+        ->name('provider.orders.index');
+
+
+    Route::patch(
+        '/provider/orders/{serviceOrder}/accept',
+        [ServiceOrderController::class, 'accept']
+    )
+        ->name('provider.orders.accept');
+
+
+    Route::patch(
+        '/provider/orders/{serviceOrder}/reject',
+        [ServiceOrderController::class, 'reject']
+    )
+        ->name('provider.orders.reject');
+
+
+    Route::patch(
+        '/provider/orders/{serviceOrder}/start',
+        [ServiceOrderController::class, 'start']
+    )
+        ->name('provider.orders.start');
+
+
+    Route::patch(
+        '/provider/orders/{serviceOrder}/complete',
+        [ServiceOrderController::class, 'complete']
+    )
+        ->name('provider.orders.complete');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | الرسائل
+    |--------------------------------------------------------------------------
+    |
+    | تبدأ المحادثة بعد قبول طلب الخدمة، وتبقى مرتبطة بنفس الطلب.
+    |
+    */
+
+    Route::get(
+        '/messages',
+        [MessageController::class, 'index']
+    )
+        ->name('messages.index');
+
+
+    Route::post(
+        '/orders/{serviceOrder}/conversation',
+        [MessageController::class, 'start']
+    )
+        ->name('messages.start');
+
+
+    Route::get(
+        '/messages/{conversation}',
+        [MessageController::class, 'show']
+    )
+        ->name('messages.show');
+
+
+    Route::post(
+        '/messages/{conversation}',
+        [MessageController::class, 'store']
+    )
+        ->name('messages.store');
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+|
+| مسارات لوحة الإدارة مستقلة عن صفحات المستخدم.
+|
+*/
+
+Route::prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | تسجيل دخول الأدمن
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/login',
+            [AdminLoginController::class, 'create']
+        )
+            ->name('login');
+
+
+        Route::post(
+            '/login',
+            [AdminLoginController::class, 'store']
+        )
+            ->name('login.store');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | صفحات الأدمن المحمية
+        |--------------------------------------------------------------------------
+        |
+        | يجب أن يكون المستخدم:
+        | 1- مسجل دخول
+        | 2- يمتلك Role بالـ slug = admin
+        |
+        */
+
+        Route::middleware([
+            'admin',
+        ])->group(function () {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | البحث الشامل في لوحة الإدارة
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/search',
+                [AdminSearchController::class, 'index']
+            )
+                ->name('search.index');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | لوحة الإدارة
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/dashboard',
+                [AdminDashboardController::class, 'index']
+            )
+                ->name('dashboard');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | طلبات الانضمام
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/join-requests',
+                [JoinRequestController::class, 'index']
+            )
+                ->name('join-requests.index');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | قبول طلب الانضمام
+            |--------------------------------------------------------------------------
+            */
+
+            Route::patch(
+                '/join-requests/{user}/approve',
+                [JoinRequestController::class, 'approve']
+            )
+                ->name('join-requests.approve');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | رفض طلب الانضمام
+            |--------------------------------------------------------------------------
+            */
+
+            Route::patch(
+                '/join-requests/{user}/reject',
+                [JoinRequestController::class, 'reject']
+            )
+                ->name('join-requests.reject');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إدارة المستخدمين
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/users',
+                [UserController::class, 'index']
+            )
+                ->name('users.index');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | تفعيل المستخدم
+            |--------------------------------------------------------------------------
+            */
+
+            Route::patch(
+                '/users/{user}/activate',
+                [UserController::class, 'activate']
+            )
+                ->name('users.activate');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | تعطيل المستخدم
+            |--------------------------------------------------------------------------
+            */
+
+            Route::patch(
+                '/users/{user}/deactivate',
+                [UserController::class, 'deactivate']
+            )
+                ->name('users.deactivate');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | حذف المستخدم حذفًا آمنًا
+            |--------------------------------------------------------------------------
+            */
+
+            Route::delete(
+                '/users/{user}',
+                [UserController::class, 'destroy']
+            )
+                ->name('users.destroy');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إدارة التصنيفات
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/categories',
+                [CategoryController::class, 'index']
+            )
+                ->name('categories.index');
+
+
+            Route::post(
+                '/categories',
+                [CategoryController::class, 'store']
+            )
+                ->name('categories.store');
+
+
+            Route::put(
+                '/categories/{category}',
+                [CategoryController::class, 'update']
+            )
+                ->name('categories.update');
+
+
+            Route::patch(
+                '/categories/{category}/activate',
+                [CategoryController::class, 'activate']
+            )
+                ->name('categories.activate');
+
+
+            Route::patch(
+                '/categories/{category}/deactivate',
+                [CategoryController::class, 'deactivate']
+            )
+                ->name('categories.deactivate');
+
+
+            Route::delete(
+                '/categories/{category}',
+                [CategoryController::class, 'destroy']
+            )
+                ->name('categories.destroy');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إدارة المهارات
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/skills',
+                [SkillController::class, 'index']
+            )
+                ->name('skills.index');
+
+
+            Route::post(
+                '/skills',
+                [SkillController::class, 'store']
+            )
+                ->name('skills.store');
+
+
+            Route::put(
+                '/skills/{skill}',
+                [SkillController::class, 'update']
+            )
+                ->name('skills.update');
+
+
+            Route::patch(
+                '/skills/{skill}/activate',
+                [SkillController::class, 'activate']
+            )
+                ->name('skills.activate');
+
+
+            Route::patch(
+                '/skills/{skill}/deactivate',
+                [SkillController::class, 'deactivate']
+            )
+                ->name('skills.deactivate');
+
+
+            Route::delete(
+                '/skills/{skill}',
+                [SkillController::class, 'destroy']
+            )
+                ->name('skills.destroy');
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إدارة الخدمات
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/services',
+                [AdminServiceController::class, 'index']
+            )
+                ->name('services.index');
+
+
+            Route::patch(
+                '/services/{service}/activate',
+                [AdminServiceController::class, 'activate']
+            )
+                ->name('services.activate');
+
+
+            Route::patch(
+                '/services/{service}/deactivate',
+                [AdminServiceController::class, 'deactivate']
+            )
+                ->name('services.deactivate');
+
+
+            Route::delete(
+                '/services/{service}',
+                [AdminServiceController::class, 'destroy']
+            )
+                ->name('services.destroy');
+
+
+            Route::patch(
+                '/services/{service}/restore',
+                [AdminServiceController::class, 'restore']
+            )
+                ->name('services.restore');
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إدارة الأعمال
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/portfolio',
+                [AdminPortfolioController::class, 'index']
+            )
+                ->name('portfolio.index');
+
+
+            Route::patch(
+                '/portfolio/{portfolioItem}/activate',
+                [AdminPortfolioController::class, 'activate']
+            )
+                ->name('portfolio.activate');
+
+
+            Route::patch(
+                '/portfolio/{portfolioItem}/deactivate',
+                [AdminPortfolioController::class, 'deactivate']
+            )
+                ->name('portfolio.deactivate');
+
+
+            Route::delete(
+                '/portfolio/{portfolioItem}',
+                [AdminPortfolioController::class, 'destroy']
+            )
+                ->name('portfolio.destroy');
+
+
+            Route::patch(
+                '/portfolio/{portfolioItem}/restore',
+                [AdminPortfolioController::class, 'restore']
+            )
+                ->name('portfolio.restore');
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إدارة البلاغات
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/reports',
+                [AdminReportController::class, 'index']
+            )
+                ->name('reports.index');
+
+
+            Route::patch(
+                '/reports/{report}/resolve',
+                [AdminReportController::class, 'resolve']
+            )
+                ->name('reports.resolve');
+
+
+            Route::patch(
+                '/reports/{report}/dismiss',
+                [AdminReportController::class, 'dismiss']
+            )
+                ->name('reports.dismiss');
+
+
+            Route::patch(
+                '/reports/{report}/reopen',
+                [AdminReportController::class, 'reopen']
+            )
+                ->name('reports.reopen');
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | إعدادات الإدارة
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/settings',
+                [AdminSettingsController::class, 'index']
+            )
+                ->name('settings.index');
+
+
+            Route::patch(
+                '/settings/profile',
+                [AdminSettingsController::class, 'updateProfile']
+            )
+                ->name('settings.profile.update');
+
+
+            Route::patch(
+                '/settings/password',
+                [AdminSettingsController::class, 'updatePassword']
+            )
+                ->name('settings.password.update');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | تسجيل خروج الأدمن
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                '/logout',
+                [AdminLoginController::class, 'destroy']
+            )
+                ->name('logout');
+
+        });
+
+    });
+
+    
+Route::get(
+    '/skill-rush',
+    [\App\Http\Controllers\SkillRushController::class, 'index']
+)->name('game.rush');
+
+require __DIR__ . '/game-scores.php';
+

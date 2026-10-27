@@ -1,0 +1,331 @@
+
+@extends('layouts.frontend.app')
+
+@section('title', 'إنشاء حساب | NASEJA')
+
+@section('content')
+
+<div class="auth-page">
+
+    {{-- الخلفية --}}
+    <div class="auth-bg auth-bg-one"></div>
+    <div class="auth-bg auth-bg-two"></div>
+
+    <div class="register-card">
+
+        {{-- =====================================
+             الجانب التعريفي
+        ====================================== --}}
+        <div class="register-showcase">
+
+            <div class="showcase-content">
+
+                {{-- شعار NASEJA --}}
+                <div class="naseja-brand">
+                    <div class="brand-icon">N</div>
+                    <span>NASEJA</span>
+                </div>
+
+                <div class="showcase-label">
+                    ✦ منصة المهارات والخدمات
+                </div>
+
+                <h1>
+                    مهارتك تستحق
+                    <span>أن تُرى.</span>
+                </h1>
+
+                <p>
+                    أنشئ ملفك الاحترافي، اعرض مهاراتك وأعمالك،
+                    واكتشف أشخاصًا موهوبين يقدمون خدمات مميزة
+                    في مكان واحد.
+                </p>
+
+                {{-- المميزات --}}
+                <div class="showcase-features">
+
+                    <div class="showcase-feature">
+                        <div class="feature-icon">✦</div>
+
+                        <div>
+                            <strong>اعرض مهاراتك</strong>
+                            <small>أنشئ ملفًا احترافيًا يعكس خبرتك.</small>
+                        </div>
+                    </div>
+
+                    <div class="showcase-feature">
+                        <div class="feature-icon">✓</div>
+
+                        <div>
+                            <strong>ابنِ ثقة العملاء</strong>
+                            <small>اجمع التقييمات والأعمال الموثقة.</small>
+                        </div>
+                    </div>
+
+                    <div class="showcase-feature">
+                        <div class="feature-icon">↗</div>
+
+                        <div>
+                            <strong>وصل خدماتك للناس</strong>
+                            <small>اجعل مهارتك أقرب لمن يبحث عنها.</small>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- =====================================
+             نموذج التسجيل
+        ====================================== --}}
+        <div class="register-form">
+
+            <div class="form-content">
+
+                {{-- يظهر في الجوال --}}
+                <div class="mobile-brand">
+                    <div class="mobile-brand-icon">N</div>
+                    <strong>NASEJA</strong>
+                </div>
+
+
+                {{-- العنوان --}}
+                <div class="form-heading">
+
+                    <span>مرحبًا بك في NASEJA</span>
+
+                    <h2>إنشاء حساب</h2>
+
+                    <p>
+                        أنشئ حسابك وابدأ رحلتك معنا.
+                    </p>
+
+                </div>
+
+
+                {{-- =====================================
+                     FORM
+                ====================================== --}}
+                <form method="POST" action="{{ route('register') }}">
+
+                    @csrf
+
+
+                    {{-- الاسم --}}
+                    <div class="form-group">
+
+                        <label for="name">
+                            الاسم الكامل
+                        </label>
+
+                        <div class="input-box">
+
+                            <span class="field-icon">👤</span>
+
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                value="{{ old('name') }}"
+                                placeholder="أدخل اسمك الكامل"
+                                autocomplete="name"
+                                required
+                            >
+
+                        </div>
+
+                        @error('name')
+                            <div class="field-error">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- البريد --}}
+                    <div class="form-group">
+
+                        <label for="email">
+                            البريد الإلكتروني
+                        </label>
+
+                        <div class="input-box">
+
+                            <span class="field-icon">✉</span>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value="{{ old('email') }}"
+                                placeholder="example@email.com"
+                                autocomplete="email"
+                                required
+                            >
+
+                        </div>
+
+                        @error('email')
+                            <div class="field-error">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- كلمة المرور --}}
+                    <div class="form-group">
+
+                        <label for="password">
+                            كلمة المرور
+                        </label>
+
+                        <div class="input-box">
+
+                            <span class="field-icon">🔒</span>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="أنشئ كلمة مرور قوية"
+                                autocomplete="new-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('password', this)"
+                                aria-label="إظهار كلمة المرور"
+                            >
+                                
+                            </button>
+
+                        </div>
+
+                        @error('password')
+                            <div class="field-error">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- تأكيد كلمة المرور --}}
+                    <div class="form-group">
+
+                        <label for="password_confirmation">
+                            تأكيد كلمة المرور
+                        </label>
+
+                        <div class="input-box">
+
+                            <span class="field-icon">🔒</span>
+
+                            <input
+                                type="password"
+                                id="password_confirmation"
+                                name="password_confirmation"
+                                placeholder="أعد كتابة كلمة المرور"
+                                autocomplete="new-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('password_confirmation', this)"
+                                aria-label="إظهار كلمة المرور"
+                            >
+                                
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- زر إنشاء الحساب --}}
+                    <button
+                        type="submit"
+                        class="register-button"
+                    >
+
+                        <span>إنشاء الحساب</span>
+
+                        <span class="button-arrow">←</span>
+
+                    </button>
+
+                </form>
+
+
+                {{-- تسجيل الدخول --}}
+                <div class="login-link">
+
+                    <span>
+                        لديك حساب بالفعل؟
+                    </span>
+
+                  <a href="{{ route('login') }}">
+    تسجيل الدخول
+</a>
+                </div>
+
+
+                {{-- الشروط --}}
+                <p class="terms">
+
+                    بإنشاء حساب، أنت توافق على
+                    <a href="#">شروط الاستخدام</a>
+                    و
+                    <a href="#">سياسة الخصوصية</a>.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@endsection
+
+
+@section('scripts')
+
+<script>
+
+function togglePassword(inputId, button) {
+
+    const input = document.getElementById(inputId);
+
+    if (input.type === 'password') {
+
+        input.type = 'text';
+
+        button.style.opacity = '1';
+
+    } else {
+
+        input.type = 'password';
+
+        button.style.opacity = '.55';
+
+    }
+
+}
+
+</script>
+
+@endsection
+

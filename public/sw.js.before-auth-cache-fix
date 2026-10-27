@@ -1,0 +1,187 @@
+const CACHE_NAME = 'naseja-v3';
+
+const BASE_PATH = '/laravel/naseja/core/public';
+
+const APP_SHELL = [
+    `${BASE_PATH}/`,
+    `${BASE_PATH}/manifest.json`,
+    `${BASE_PATH}/images/naseja-logo.png`
+];
+
+
+/* =========================================================
+   INSTALL
+========================================================= */
+
+self.addEventListener('install', event => {
+
+    event.waitUntil(
+
+        caches.open(CACHE_NAME)
+
+            .then(cache => {
+
+                return cache.addAll(APP_SHELL);
+
+            })
+
+            .then(() => {
+
+                return self.skipWaiting();
+
+            })
+
+    );
+
+});
+
+
+/* =========================================================
+   ACTIVATE
+========================================================= */
+
+self.addEventListener('activate', event => {
+
+    event.waitUntil(
+
+        caches.keys()
+
+            .then(cacheNames => {
+
+                return Promise.all(
+
+                    cacheNames
+
+                        .filter(name => name !== CACHE_NAME)
+
+                        .map(name => {
+
+                            return caches.delete(name);
+
+                        })
+
+                );
+
+            })
+
+            .then(() => {
+
+                return self.clients.claim();
+
+            })
+
+    );
+
+});
+
+
+/* =========================================================
+   FETCH
+========================================================= */
+
+self.addEventListener('fetch', event => {
+
+    if (event.request.method !== 'GET') {
+
+        return;
+
+    }
+
+
+    event.respondWith(
+
+        caches.match(event.request)
+
+            .then(cachedResponse => {
+
+                /*
+                |--------------------------------------------------------------------------
+                | إذا كان الملف موجودًا في الكاش
+                |--------------------------------------------------------------------------
+                */
+
+                if (cachedResponse) {
+
+                    return cachedResponse;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | إذا لم يكن موجودًا، نحاول تحميله من الإنترنت
+                |--------------------------------------------------------------------------
+                */
+
+                return fetch(event.request)
+
+                    .then(networkResponse => {
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | إذا كان الرد غير صالح للكاش
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (
+                            !networkResponse ||
+                            networkResponse.status !== 200 ||
+                            networkResponse.type === 'opaque'
+                        ) {
+
+                            return networkResponse;
+
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | نسخ الرد قبل تخزينه
+                        |--------------------------------------------------------------------------
+                        */
+
+                        const responseToCache =
+                            networkResponse.clone();
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | تخزين الملف
+                        |--------------------------------------------------------------------------
+                        */
+
+                        caches.open(CACHE_NAME)
+
+                            .then(cache => {
+
+                                cache.put(
+                                    event.request,
+                                    responseToCache
+                                );
+
+                            });
+
+
+                        return networkResponse;
+
+                    })
+
+                    .catch(() => {
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | في حالة عدم وجود إنترنت
+                        |--------------------------------------------------------------------------
+                        */
+
+                        return caches.match(
+                            `${BASE_PATH}/`
+                        );
+
+                    });
+
+            })
+
+    );
+
+});

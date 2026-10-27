@@ -1,0 +1,850 @@
+@extends('layouts.frontend.public')
+
+@section('title', 'استكشاف أصحاب المهارات والخدمات | NASEJA')
+@section(
+    'meta_description',
+    'استكشف أصحاب المهارات والخدمات والأعمال على NASEJA، وابحث عن المهارة المناسبة واطّلع على الملفات والخدمات بسهولة.'
+)
+@section('canonical', route('explore'))
+
+@section('robots')
+{{ request()->query() ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1' }}
+@endsection
+
+@push('styles')
+    <link
+        rel="stylesheet"
+        href="{{ asset('css/explore.css') }}?v={{ filemtime(public_path('css/explore.css')) }}"
+    >
+    <style>
+        /* Keep the favorite action separate from long provider names. */
+        .explore-user-card .explore-favorite {
+            width: auto !important;
+            min-width: 40px;
+            padding: 0 10px !important;
+            gap: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            z-index: 2;
+        }
+        .explore-user-card .explore-favorite-count {
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .explore-user-card .explore-user-top {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            padding-top: 43px;
+        }
+        .explore-user-card .explore-user-top > div:last-child {
+            flex: 1;
+            min-width: 0;
+        }
+        .explore-user-card .explore-user-name {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            white-space: normal;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+            text-overflow: ellipsis;
+        }
+    </style>
+@endpush
+
+
+@section('content')
+
+<div class="explore-page">
+
+
+    {{-- =====================================================
+         رأس الصفحة + البحث
+    ====================================================== --}}
+
+    <section class="explore-top">
+
+        <div class="explore-heading">
+
+            <div class="explore-kicker">
+                <span class="explore-kicker-dot"></span>
+
+                <span
+                    data-naseja-ar="اكتشف NASEJA"
+                    data-naseja-en="Discover NASEJA"
+                >
+                    اكتشف NASEJA
+                </span>
+            </div>
+
+            <h1
+                data-naseja-ar="اكتشف المهارات التي تبحث عنها ✨"
+                data-naseja-en="Discover the skills you are looking for ✨"
+            >
+                اكتشف المهارات التي تبحث عنها ✨
+            </h1>
+
+            <p
+                data-naseja-ar="استكشف أصحاب المهارات والأعمال والخدمات واكتشف المواهب المميزة في مجتمع NASEJA."
+                data-naseja-en="Explore skilled people, portfolios and services, and discover standout talent in the NASEJA community."
+            >
+                استكشف أصحاب المهارات والأعمال والخدمات
+                واكتشف المواهب المميزة في مجتمع NASEJA.
+            </p>
+
+        </div>
+
+
+        {{-- البحث --}}
+
+        <div class="explore-search-box">
+
+            <form
+                method="GET"
+                action="{{ route('explore') }}"
+                class="explore-search"
+            >
+
+                <div class="explore-search-icon">
+                    <i data-lucide="search"></i>
+                </div>
+
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ $search }}"
+                    placeholder="ابحث عن شخص، مهارة أو خدمة..."
+                    data-naseja-placeholder-ar="ابحث عن شخص، مهارة أو خدمة..."
+                    data-naseja-placeholder-en="Search for a person, skill or service..."
+                >
+
+                @if($category)
+
+                    <input
+                        type="hidden"
+                        name="category"
+                        value="{{ $category }}"
+                    >
+
+                @endif
+
+                <button type="submit">
+                    <span
+                        data-naseja-ar="بحث"
+                        data-naseja-en="Search"
+                    >
+                        بحث
+                    </span>
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+
+    {{-- =====================================================
+         التصنيفات
+    ====================================================== --}}
+
+    <section class="explore-category-section">
+
+        <div class="explore-section-label">
+
+            <div>
+                <h2
+                    data-naseja-ar="استكشف حسب المجال"
+                    data-naseja-en="Explore by category"
+                >
+                    استكشف حسب المجال
+                </h2>
+            </div>
+
+            <span>
+                {{ $categories->count() }}
+
+                <span
+                    data-naseja-ar="مجالات"
+                    data-naseja-en="categories"
+                >
+                    مجالات
+                </span>
+            </span>
+
+        </div>
+
+
+        <div class="explore-categories">
+
+            {{-- جميع المجالات --}}
+
+            <a
+                href="{{ route('explore') }}"
+                class="explore-category {{ !$selectedCategory ? 'active' : '' }}"
+            >
+
+                <div class="explore-category-icon">
+                    <i data-lucide="grid-2x2"></i>
+                </div>
+
+                <strong
+                    data-naseja-ar="الكل"
+                    data-naseja-en="All"
+                >
+                    الكل
+                </strong>
+
+            </a>
+
+
+            {{-- التصنيفات --}}
+
+            @forelse($categories as $categoryItem)
+
+                @php
+                    $icon = match($categoryItem->slug) {
+                        'sewing-tailoring' => 'scissors',
+                        'embroidery' => 'sparkles',
+                        'baking-desserts' => 'cake-slice',
+                        'cooking' => 'chef-hat',
+                        'photography' => 'camera',
+                        'design' => 'palette',
+                        'handicrafts' => 'hand',
+                        'accessories-making' => 'gem',
+                        default => 'wrench',
+                    };
+                @endphp
+
+                <a
+                    href="{{ route('explore', ['category' => $categoryItem->slug]) }}"
+                    class="explore-category
+                    {{ $selectedCategory && $selectedCategory->id == $categoryItem->id ? 'active' : '' }}"
+                >
+
+                    <div class="explore-category-icon">
+                        <i data-lucide="{{ $icon }}"></i>
+                    </div>
+
+                    <strong
+                        data-naseja-ar="{{ $categoryItem->name_ar }}"
+                        data-naseja-en="{{ $categoryItem->name_en ?? $categoryItem->name_ar }}"
+                    >
+                        {{ $categoryItem->name_ar }}
+                    </strong>
+
+                </a>
+
+            @empty
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا توجد تصنيفات مضافة حاليًا."
+                    data-naseja-en="No categories have been added yet."
+                >
+                    لا توجد تصنيفات مضافة حاليًا.
+                </div>
+
+            @endforelse
+
+        </div>
+
+
+        @if($selectedCategory)
+
+            <div
+                class="explore-filter-message"
+                data-naseja-ar="أنت تستكشف الآن: {{ $selectedCategory->name_ar }}"
+                data-naseja-en="You are now exploring: {{ $selectedCategory->name_en ?? $selectedCategory->name_ar }}"
+            >
+                أنت تستكشف الآن:
+                {{ $selectedCategory->name_ar }}
+            </div>
+
+        @endif
+
+    </section>
+
+
+
+    <div class="explore-divider"></div>
+
+
+
+    {{-- =====================================================
+         الأشخاص
+    ====================================================== --}}
+
+    <section class="explore-section">
+
+        <div class="explore-section-title">
+
+            <div>
+
+                @if($selectedCategory)
+
+                    <h2
+                        data-naseja-ar="أصحاب المهارات في {{ $selectedCategory->name_ar }}"
+                        data-naseja-en="Skilled people in {{ $selectedCategory->name_en ?? $selectedCategory->name_ar }}"
+                    >
+                        أصحاب المهارات في
+                        {{ $selectedCategory->name_ar }}
+                    </h2>
+
+                @else
+
+                    <h2
+                        data-naseja-ar="أشخاص مميزون"
+                        data-naseja-en="Featured people"
+                    >
+                        أشخاص مميزون
+                    </h2>
+
+                @endif
+
+                <p
+                    data-naseja-ar="تعرف على أصحاب المهارات والخبرات"
+                    data-naseja-en="Meet skilled and experienced people"
+                >
+                    تعرف على أصحاب المهارات والخبرات
+                </p>
+
+            </div>
+
+
+            @if($users->count())
+
+                <span class="explore-section-count">
+
+                    {{ $users->count() }}
+
+                    <span
+                        data-naseja-ar="شخص"
+                        data-naseja-en="people"
+                    >
+                        شخص
+                    </span>
+
+                </span>
+
+            @endif
+
+        </div>
+
+
+
+        @if($users->count())
+
+            @php
+                $providerIds = [];
+                foreach ($users as $provider) {
+                    $providerIds[] = $provider->id;
+                }
+
+                $favoriteCounts = \Illuminate\Support\Facades\DB::table('favorites')
+                    ->whereIn('favorite_user_id', $providerIds)
+                    ->select('favorite_user_id')
+                    ->selectRaw('COUNT(DISTINCT user_id) as total')
+                    ->groupBy('favorite_user_id')
+                    ->pluck('total', 'favorite_user_id');
+            @endphp
+
+            <div class="explore-users">
+
+                @foreach($users as $user)
+
+                    <article class="explore-user-card">
+
+                        {{-- زر الإعجاب --}}
+
+                        @php
+                            $isFavorite = auth()->check()
+                                && $favoriteUserIds->contains($user->id);
+
+                            $isOwnProfile = auth()->check()
+                                && auth()->id() === $user->id;
+
+                            $favoriteCount = (int) $favoriteCounts->get($user->id, 0);
+                        @endphp
+
+
+                        @if($isOwnProfile)
+
+                            <button
+                                type="button"
+                                class="explore-favorite explore-favorite-disabled"
+                                title="هذا حسابك"
+                                data-naseja-title-ar="هذا حسابك"
+                                data-naseja-title-en="This is your account"
+                                disabled
+                            >
+                                <i data-lucide="heart"></i>
+                                <span class="explore-favorite-count" aria-hidden="true">{{ $favoriteCount }}</span>
+                            </button>
+
+                        @elseif($isFavorite)
+
+                            <form
+                                method="POST"
+                                action="{{ route('favorites.destroy', $user->id) }}"
+                                class="explore-favorite-form"
+                            >
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button
+                                    type="submit"
+                                    class="explore-favorite active"
+                                    title="إزالة الإعجاب"
+                                    data-naseja-title-ar="إزالة الإعجاب"
+                                    data-naseja-title-en="Remove favorite"
+                                >
+                                    <i
+                                        data-lucide="heart"
+                                        style="fill: currentColor;"
+                                    ></i>
+                                    <span class="explore-favorite-count" aria-hidden="true">{{ $favoriteCount }}</span>
+                                </button>
+
+                            </form>
+
+                        @else
+
+                            <form
+                                method="POST"
+                                action="{{ route('favorites.store', $user->id) }}"
+                                class="explore-favorite-form"
+                            >
+
+                                @csrf
+
+                                <button
+                                    type="submit"
+                                    class="explore-favorite"
+                                    title="إعجاب"
+                                    data-naseja-title-ar="إعجاب"
+                                    data-naseja-title-en="Favorite"
+                                >
+                                    <i data-lucide="heart"></i>
+                                    <span class="explore-favorite-count" aria-hidden="true">{{ $favoriteCount }}</span>
+                                </button>
+
+                            </form>
+
+                        @endif
+
+
+                        {{-- بيانات المستخدم --}}
+
+                        <div class="explore-user-top">
+
+                            <div class="explore-avatar">
+
+                                @if($user->profile?->avatar)
+
+                                    <img
+                                        src="{{ asset('storage/' . $user->profile->avatar) }}"
+                                        alt="{{ $user->name }}"
+                                    >
+
+                                @else
+
+                                    {{ mb_substr($user->name, 0, 1) }}
+
+                                @endif
+
+                            </div>
+
+
+                            <div>
+
+                                <h3 class="explore-user-name">
+                                    {{ $user->name }}
+                                </h3>
+
+                                <div class="explore-user-job">
+
+                                    @if($user->profile?->location)
+
+                                        {{ $user->profile->location }}
+
+                                    @else
+
+                                        <span
+                                            data-naseja-ar="صاحب مهارة"
+                                            data-naseja-en="Skilled professional"
+                                        >
+                                            صاحب مهارة
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- المهارات --}}
+
+                        <div class="explore-tags">
+
+                            @forelse($user->userSkills->take(4) as $userSkill)
+
+                                @if($userSkill->skill)
+
+                                    <span
+                                        class="explore-tag"
+                                        data-naseja-ar="{{ $userSkill->skill->name_ar ?? $userSkill->skill->name_en }}"
+                                        data-naseja-en="{{ $userSkill->skill->name_en ?? $userSkill->skill->name_ar }}"
+                                    >
+                                        {{ $userSkill->skill->name_ar ?? $userSkill->skill->name_en }}
+                                    </span>
+
+                                @endif
+
+                            @empty
+
+                                <span
+                                    class="explore-tag"
+                                    data-naseja-ar="مهارة"
+                                    data-naseja-en="Skill"
+                                >
+                                    مهارة
+                                </span>
+
+                            @endforelse
+
+                        </div>
+
+
+                        {{-- الملف --}}
+
+                        <a
+                            href="{{ route('users.show', $user->id) }}"
+                            class="explore-profile-btn"
+                        >
+                            <span
+                                data-naseja-ar="عرض الملف"
+                                data-naseja-en="View profile"
+                            >
+                                عرض الملف
+                            </span>
+                        </a>
+
+                    </article>
+
+                @endforeach
+
+            </div>
+
+        @else
+
+            @if($selectedCategory)
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا يوجد أشخاص في مجال {{ $selectedCategory->name_ar }} حاليًا."
+                    data-naseja-en="There are currently no people in {{ $selectedCategory->name_en ?? $selectedCategory->name_ar }}."
+                >
+                    لا يوجد أشخاص في مجال
+                    {{ $selectedCategory->name_ar }}
+                    حاليًا.
+                </div>
+
+            @elseif($search !== '')
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا يوجد مستخدمون مطابقون للبحث حاليًا."
+                    data-naseja-en="No users currently match your search."
+                >
+                    لا يوجد مستخدمون مطابقون للبحث حاليًا.
+                </div>
+
+            @else
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا يوجد مستخدمون حاليًا."
+                    data-naseja-en="There are currently no users."
+                >
+                    لا يوجد مستخدمون حاليًا.
+                </div>
+
+            @endif
+
+        @endif
+
+    </section>
+
+
+
+    {{-- =====================================================
+         أحدث الأعمال
+    ====================================================== --}}
+
+    <section class="explore-section">
+
+        <div class="explore-section-title">
+
+            <div>
+
+                <h2
+                    data-naseja-ar="أحدث الأعمال"
+                    data-naseja-en="Latest work"
+                >
+                    أحدث الأعمال
+                </h2>
+
+                <p
+                    data-naseja-ar="أعمال جديدة من أصحاب المهارات في NASEJA"
+                    data-naseja-en="New work from NASEJA creators"
+                >
+                    أعمال جديدة من أصحاب المهارات في NASEJA
+                </p>
+
+            </div>
+
+
+            @if($portfolioItems->count())
+
+                <span class="explore-section-count">
+
+                    {{ $portfolioItems->count() }}
+
+                    <span
+                        data-naseja-ar="أعمال"
+                        data-naseja-en="works"
+                    >
+                        أعمال
+                    </span>
+
+                </span>
+
+            @endif
+
+        </div>
+
+
+
+        @if($portfolioItems->count())
+
+            <div class="explore-works">
+
+                @foreach($portfolioItems as $item)
+
+                    <article class="explore-work-card">
+
+                        <div class="explore-work-image">
+
+                            @if($item->images->first())
+
+                                <img
+                                    src="{{ asset('storage/' . $item->images->first()->file_path) }}"
+                                    alt="{{ $item->images->first()->alt_text ?? $item->title_ar }}"
+                                >
+
+                            @else
+
+                                <i data-lucide="image"></i>
+
+                            @endif
+
+                        </div>
+
+
+                        <div class="explore-work-info">
+
+                            <h3
+                                data-naseja-ar="{{ $item->title_ar ?? $item->title_en }}"
+                                data-naseja-en="{{ $item->title_en ?? $item->title_ar }}"
+                            >
+                                {{ $item->title_ar ?? $item->title_en }}
+                            </h3>
+
+                            <p
+                                data-naseja-ar="{{ $item->description_ar ?? $item->description_en }}"
+                                data-naseja-en="{{ $item->description_en ?? $item->description_ar }}"
+                            >
+                                {{ $item->description_ar ?? $item->description_en }}
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                @endforeach
+
+            </div>
+
+        @else
+
+            @if($selectedCategory)
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا توجد أعمال في مجال {{ $selectedCategory->name_ar }} حاليًا."
+                    data-naseja-en="There is currently no work in {{ $selectedCategory->name_en ?? $selectedCategory->name_ar }}."
+                >
+                    لا توجد أعمال في مجال
+                    {{ $selectedCategory->name_ar }}
+                    حاليًا.
+                </div>
+
+            @else
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا توجد أعمال منشورة حاليًا."
+                    data-naseja-en="There is currently no published work."
+                >
+                    لا توجد أعمال منشورة حاليًا.
+                </div>
+
+            @endif
+
+        @endif
+
+    </section>
+
+
+
+    {{-- =====================================================
+         الخدمات
+    ====================================================== --}}
+
+    <section class="explore-section">
+
+        <div class="explore-section-title">
+
+            <div>
+
+                <h2
+                    data-naseja-ar="خدمات يمكنك طلبها"
+                    data-naseja-en="Services you can request"
+                >
+                    خدمات يمكنك طلبها
+                </h2>
+
+                <p
+                    data-naseja-ar="اكتشف الخدمات التي يقدمها أصحاب المهارات"
+                    data-naseja-en="Discover services offered by skilled professionals"
+                >
+                    اكتشف الخدمات التي يقدمها أصحاب المهارات
+                </p>
+
+            </div>
+
+
+            @if($services->count())
+
+                <span class="explore-section-count">
+
+                    {{ $services->count() }}
+
+                    <span
+                        data-naseja-ar="خدمات"
+                        data-naseja-en="services"
+                    >
+                        خدمات
+                    </span>
+
+                </span>
+
+            @endif
+
+        </div>
+
+
+
+        @if($services->count())
+
+            <div class="explore-services">
+
+                @foreach($services as $service)
+
+                    <article class="explore-service-card">
+
+                        <div class="explore-service-icon">
+                            <i data-lucide="briefcase-business"></i>
+                        </div>
+
+                        <h3
+                            data-naseja-ar="{{ $service->title_ar ?? $service->title_en }}"
+                            data-naseja-en="{{ $service->title_en ?? $service->title_ar }}"
+                        >
+                            {{ $service->title_ar ?? $service->title_en }}
+                        </h3>
+
+                        <p
+                            data-naseja-ar="{{ $service->description_ar ?? $service->description_en }}"
+                            data-naseja-en="{{ $service->description_en ?? $service->description_ar }}"
+                        >
+                            {{ $service->description_ar ?? $service->description_en }}
+                        </p>
+
+                        <a
+                            href="#"
+                            class="explore-service-link"
+                        >
+                            <span
+                                data-naseja-ar="استكشف الخدمة ←"
+                                data-naseja-en="Explore service →"
+                            >
+                                استكشف الخدمة ←
+                            </span>
+                        </a>
+
+                    </article>
+
+                @endforeach
+
+            </div>
+
+        @else
+
+            @if($selectedCategory)
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا توجد خدمات في مجال {{ $selectedCategory->name_ar }} حاليًا."
+                    data-naseja-en="There are currently no services in {{ $selectedCategory->name_en ?? $selectedCategory->name_ar }}."
+                >
+                    لا توجد خدمات في مجال
+                    {{ $selectedCategory->name_ar }}
+                    حاليًا.
+                </div>
+
+            @else
+
+                <div
+                    class="explore-empty"
+                    data-naseja-ar="لا توجد خدمات منشورة حاليًا."
+                    data-naseja-en="There are currently no published services."
+                >
+                    لا توجد خدمات منشورة حاليًا.
+                </div>
+
+            @endif
+
+        @endif
+
+    </section>
+
+</div>
+
+@endsection
+
+
+@push('scripts')
+    <script
+        src="{{ asset('js/explore.js') }}?v={{ filemtime(public_path('js/explore.js')) }}"
+    ></script>
+@endpush

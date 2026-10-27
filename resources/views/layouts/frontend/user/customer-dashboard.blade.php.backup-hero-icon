@@ -1,0 +1,484 @@
+@extends('layouts.frontend.user')
+
+@section('title', 'لوحة العميل | NASEJA')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+
+    <style>
+        .customer-dashboard {
+            direction: rtl;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 8px 0 36px;
+        }
+
+        .customer-hero {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 24px;
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid #e8e5f5;
+            border-radius: 24px;
+            background:
+                radial-gradient(circle at top left, rgba(111, 91, 211, .15), transparent 34%),
+                linear-gradient(135deg, #ffffff 0%, #faf9ff 100%);
+            box-shadow: 0 12px 34px rgba(55, 45, 120, .07);
+        }
+
+        .customer-hero::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            left: -70px;
+            bottom: -90px;
+            border-radius: 50%;
+            background: rgba(111, 91, 211, .06);
+            pointer-events: none;
+        }
+
+        .customer-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 11px;
+            margin-bottom: 12px;
+            border-radius: 999px;
+            background: #f0edff;
+            color: #5e4ed0;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .customer-hero h1 {
+            margin: 0;
+            color: #26252e;
+            font-size: clamp(25px, 4vw, 36px);
+            font-weight: 900;
+            line-height: 1.35;
+        }
+
+        .customer-hero h1 span {
+            color: #5e4ed0;
+        }
+
+        .customer-hero p {
+            max-width: 650px;
+            margin: 12px 0 0;
+            color: #777582;
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        .customer-hero-icon {
+            width: 88px;
+            height: 88px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #6555d7, #8d7fe6);
+            box-shadow: 0 14px 30px rgba(94, 78, 208, .22);
+        }
+
+        .customer-hero-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .customer-section-heading {
+            margin-bottom: 15px;
+        }
+
+        .customer-section-heading h2 {
+            margin: 0;
+            color: #2c2b34;
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .customer-section-heading p {
+            margin: 5px 0 0;
+            color: #8a8995;
+            font-size: 13px;
+        }
+
+        .customer-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .customer-action-card {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 215px;
+            padding: 22px;
+            border: 1px solid #e9e8ef;
+            border-radius: 20px;
+            background: #fff;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 8px 24px rgba(55, 45, 120, .045);
+            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        }
+
+        .customer-action-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #5e4ed0, #9b8df0);
+            opacity: 0;
+            transition: opacity .2s ease;
+        }
+
+        .customer-action-card:hover {
+            transform: translateY(-4px);
+            border-color: #dcd7ff;
+            box-shadow: 0 15px 34px rgba(55, 45, 120, .10);
+        }
+
+        .customer-action-card:hover::before {
+            opacity: 1;
+        }
+
+        .customer-action-icon {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 17px;
+            border-radius: 15px;
+            background: #f3f1ff;
+            color: #5e4ed0;
+        }
+
+        .customer-action-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.9;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .customer-action-card h3 {
+            margin: 0 0 8px;
+            color: #2b2a33;
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .customer-action-card p {
+            margin: 0;
+            color: #85838f;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .customer-action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: auto;
+            padding-top: 18px;
+            color: #5e4ed0;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .customer-action-link svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .customer-info {
+            display: grid;
+            grid-template-columns: 1.25fr .75fr;
+            gap: 16px;
+        }
+
+        .customer-info-card {
+            padding: 23px;
+            border: 1px solid #e9e8ef;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(55, 45, 120, .045);
+        }
+
+        .customer-info-card h3 {
+            margin: 0 0 8px;
+            color: #2d2c35;
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .customer-info-card p {
+            margin: 0;
+            color: #85838f;
+            font-size: 13px;
+            line-height: 1.85;
+        }
+
+        .customer-account-row {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-top: 17px;
+            padding: 14px;
+            border-radius: 15px;
+            background: #faf9ff;
+        }
+
+        .customer-avatar {
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #6555d7, #8d7fe6);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .customer-account-row strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #313039;
+            font-size: 14px;
+        }
+
+        .customer-account-row span {
+            color: #8c8a96;
+            font-size: 12px;
+        }
+
+        .customer-note {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 15px;
+            background: #f7f5ff;
+            color: #656271;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .customer-note svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            fill: none;
+            stroke: #5e4ed0;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @media (max-width: 900px) {
+            .customer-actions,
+            .customer-info {
+                grid-template-columns: 1fr;
+            }
+
+            .customer-hero {
+                grid-template-columns: 1fr;
+            }
+
+            .customer-hero-icon {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .customer-hero,
+            .customer-action-card,
+            .customer-info-card {
+                padding: 18px;
+                border-radius: 18px;
+            }
+        }
+    </style>
+@endpush
+
+@section('content')
+
+<div class="customer-dashboard">
+
+    <section class="customer-hero">
+        <div>
+            <span class="customer-kicker">
+                حساب عميل
+            </span>
+
+            <h1>
+                أهلًا،
+                <span>{{ $user->name }}</span>
+            </h1>
+
+            <p>
+                من هنا يمكنك اكتشاف أصحاب المهارات والخدمات المناسبة لك،
+                حفظ المفضلة، وإدارة بيانات حسابك بسهولة.
+            </p>
+        </div>
+
+        <div class="customer-hero-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 3v18"/>
+                <path d="M3 12h18"/>
+                <circle cx="12" cy="12" r="9"/>
+            </svg>
+        </div>
+    </section>
+
+    <div class="customer-section-heading">
+        <h2>ماذا تريد أن تفعل؟</h2>
+        <p>الوصول السريع إلى أهم وظائف حساب العميل.</p>
+    </div>
+
+    <div class="customer-actions">
+
+        <a href="{{ route('explore') }}" class="customer-action-card">
+            <div class="customer-action-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m20 20-3.5-3.5"/>
+                </svg>
+            </div>
+
+            <h3>استكشاف المهارات والخدمات</h3>
+
+            <p>
+                ابحث عن أصحاب المهارات وتصفح الخدمات والأعمال المتاحة في المنصة.
+            </p>
+
+            <span class="customer-action-link">
+                ابدأ الاستكشاف
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 12h14"/>
+                    <path d="m13 6 6 6-6 6"/>
+                </svg>
+            </span>
+        </a>
+
+        <a href="{{ route('favorites.index') }}" class="customer-action-card">
+            <div class="customer-action-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/>
+                </svg>
+            </div>
+
+            <h3>المفضلة</h3>
+
+            <p>
+                ارجع بسرعة إلى أصحاب المهارات الذين حفظتهم أثناء التصفح.
+            </p>
+
+            <span class="customer-action-link">
+                عرض المفضلة
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 12h14"/>
+                    <path d="m13 6 6 6-6 6"/>
+                </svg>
+            </span>
+        </a>
+
+        <a href="{{ route('profile.edit') }}" class="customer-action-card">
+            <div class="customer-action-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 21a8 8 0 0 1 16 0"/>
+                </svg>
+            </div>
+
+            <h3>إدارة حسابي</h3>
+
+            <p>
+                حدّث بياناتك الشخصية ومعلومات التواصل الخاصة بحسابك.
+            </p>
+
+            <span class="customer-action-link">
+                تعديل البيانات
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 12h14"/>
+                    <path d="m13 6 6 6-6 6"/>
+                </svg>
+            </span>
+        </a>
+
+    </div>
+
+    <div class="customer-info">
+
+        <section class="customer-info-card">
+            <h3>حسابك في NASEJA</h3>
+
+            <p>
+                أنت مسجل كعميل، لذلك لوحة التحكم تعرض لك الأدوات المناسبة للبحث
+                عن أصحاب المهارات والاستفادة من خدماتهم.
+            </p>
+
+            <div class="customer-account-row">
+                <div class="customer-avatar">
+                    {{ mb_substr($user->name, 0, 1) }}
+                </div>
+
+                <div>
+                    <strong>{{ $user->name }}</strong>
+                    <span>{{ $user->email }}</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="customer-info-card">
+            <h3>قريبًا</h3>
+
+            <p>
+                عندما تتم إضافة نظام الطلبات والمحادثات إلى المشروع، يمكن ربطهما
+                بهذه اللوحة مباشرة بدون تغيير نوع حسابك.
+            </p>
+
+            <div class="customer-note">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 8v4"/>
+                    <path d="M12 16h.01"/>
+                </svg>
+
+                <span>
+                    حاليًا الوظائف الجاهزة للعميل هي الاستكشاف، المفضلة،
+                    وتعديل الملف الشخصي.
+                </span>
+            </div>
+        </section>
+
+    </div>
+
+</div>
+
+@endsection

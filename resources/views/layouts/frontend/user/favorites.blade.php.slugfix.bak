@@ -1,0 +1,287 @@
+@extends('layouts.frontend.user')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/favorites.css') }}">
+@endpush
+
+@section('title', 'الإعجابات | NASEJA')
+
+@section('content')
+
+<div class="favorites-page">
+
+    {{-- =====================================================
+         رأس الصفحة
+    ====================================================== --}}
+    <div class="favorites-hero">
+
+        <div class="favorites-hero-icon">
+            <i data-lucide="heart"></i>
+        </div>
+
+        <div>
+
+            <span class="favorites-hero-label">
+                تفاعل الأشخاص مع أعمالك
+            </span>
+
+            <h1>
+                الإعجابات
+            </h1>
+
+            <p>
+                الأشخاص الذين أعجبوا بأعمالك ومهاراتك على NASEJA.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {{-- =====================================================
+         رسائل النظام
+    ====================================================== --}}
+
+    @if(session('success'))
+
+        <div class="favorites-success">
+
+            <i data-lucide="check-circle"></i>
+
+            <span>
+                {{ session('success') }}
+            </span>
+
+        </div>
+
+    @endif
+
+
+    @if(session('info'))
+
+        <div class="favorites-info">
+
+            <i data-lucide="info"></i>
+
+            <span>
+                {{ session('info') }}
+            </span>
+
+        </div>
+
+    @endif
+
+
+    {{-- =====================================================
+         محتوى الإعجابات
+    ====================================================== --}}
+    <section class="favorites-section">
+
+        <div class="favorites-section-header">
+
+            <div>
+
+                <h2>
+                    الأشخاص الذين أعجبوا بأعمالك
+                </h2>
+
+                <p>
+                    هؤلاء الأشخاص تفاعلوا معك وأعجبوا بأعمالك.
+                </p>
+
+            </div>
+
+
+            {{-- =================================================
+                 عدد الإعجابات
+            ================================================== --}}
+            <div class="favorites-count">
+
+                {{ $favorites->count() }}
+
+                <span>
+                    إعجاب
+                </span>
+
+            </div>
+
+        </div>
+
+
+        {{-- =================================================
+             قائمة الأشخاص
+        ================================================== --}}
+
+        @forelse($favorites as $favorite)
+
+            @php
+
+                /*
+                |--------------------------------------------------------------------------
+                | الشخص الذي ضغط ❤️
+                |--------------------------------------------------------------------------
+                */
+
+                $favoriteUser = $favorite->user;
+
+            @endphp
+
+
+            @if($favoriteUser)
+
+                <article class="favorite-item">
+
+
+                    {{-- =================================================
+                         صورة الشخص
+                    ================================================== --}}
+
+                    <div class="favorite-avatar">
+
+                        @if($favoriteUser->profile?->avatar)
+
+                            <img
+                                src="{{ asset('storage/' . $favoriteUser->profile->avatar) }}"
+                                alt="{{ $favoriteUser->name }}"
+                            >
+
+                        @else
+
+                            <span>
+                                {{ mb_substr($favoriteUser->name, 0, 1) }}
+                            </span>
+
+                        @endif
+
+                    </div>
+
+
+                    {{-- =================================================
+                         معلومات الشخص
+                    ================================================== --}}
+
+                    <div class="favorite-info">
+
+                        <h3>
+                            {{ $favoriteUser->name }}
+                        </h3>
+
+
+                        @if($favoriteUser->profile?->location)
+
+                            <div class="favorite-location">
+
+                                <i data-lucide="map-pin"></i>
+
+                                <span>
+                                    {{ $favoriteUser->profile->location }}
+                                </span>
+
+                            </div>
+
+                        @else
+
+                            <div class="favorite-location">
+
+                                <i data-lucide="sparkles"></i>
+
+                                <span>
+                                    مستخدم مهتم بأعمالك
+                                </span>
+
+                            </div>
+
+                        @endif
+
+
+                        @if($favoriteUser->profile?->bio)
+
+                            <p>
+                                {{ Str::limit($favoriteUser->profile->bio, 110) }}
+                            </p>
+
+                        @else
+
+                            <p>
+                                أعجب بأحد أعمالك على NASEJA ❤️
+                            </p>
+
+                        @endif
+
+                    </div>
+
+
+                    {{-- =================================================
+                         الأزرار
+                    ================================================== --}}
+
+                    <div class="favorite-actions">
+
+                        <a
+                            href="{{ route('users.show', $favoriteUser->id) }}"
+                            class="favorite-view-button"
+                        >
+
+                            <i data-lucide="user-round"></i>
+
+                            <span>
+                                عرض الملف
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                </article>
+
+            @endif
+
+
+        @empty
+
+            {{-- =================================================
+                 لا توجد إعجابات
+            ================================================== --}}
+
+            <div class="favorites-empty">
+
+                <div class="favorites-empty-icon">
+
+                    <i data-lucide="heart"></i>
+
+                </div>
+
+
+                <h3>
+                    لا توجد إعجابات حتى الآن
+                </h3>
+
+
+                <p>
+                    عندما يعجب أحد الأشخاص بأعمالك،
+                    سيظهر هنا.
+                </p>
+
+
+                <a
+                    href="{{ route('explore') }}"
+                    class="favorites-explore-button"
+                >
+
+                    <i data-lucide="compass"></i>
+
+                    <span>
+                        استكشف NASEJA
+                    </span>
+
+                </a>
+
+            </div>
+
+        @endforelse
+
+    </section>
+
+</div>
+
+@endsection

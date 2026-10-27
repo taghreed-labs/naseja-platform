@@ -1,0 +1,15 @@
+.public-game-link{position:relative; width:42px; height:42px; flex:0 0 42px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #ddd6f4; border-radius:14px; color:#5f50d3; background: linear-gradient(145deg,#ffffff 0%,#f5f2ff 100%); box-shadow: 0 8px 22px rgba(74,57,152,.10), inset 0 0 0 1px rgba(255,255,255,.65); text-decoration:none; cursor:pointer; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, color .18s ease, background .18s ease;}.public-game-link::before{content:""; position:absolute; width:7px; height:7px; top:5px; right:5px; border-radius:50%; background:#7a68f1; box-shadow: 0 0 0 3px #fff, 0 0 12px rgba(122,104,241,.55); transition:.18s ease;}.public-game-link svg{width:19px; height:19px; stroke-width:2.15;}.public-game-link:hover{transform:translateY(-2px); color:#ffffff; border-color:#6d5dfc; background: linear-gradient(135deg,#6657ed 0%,#826ff4 100%); box-shadow: 0 12px 28px rgba(91,77,232,.25);}.public-game-link:hover::before{background:#ffffff; box-shadow: 0 0 0 3px rgba(255,255,255,.22), 0 0 12px rgba(255,255,255,.50);}.public-game-link:focus-visible{outline:3px solid rgba(109,93,252,.20); outline-offset:3px;}.public-game-link:active{transform:translateY(0) scale(.97);}@media(max-width:768px){.public-game-link{width:40px; height:40px; flex-basis:40px; border-radius:13px;}.public-game-link svg{width:18px; height:18px;}}
+/* Phone layout for the public header. */
+@media (max-width:600px){
+.public-header{height:auto!important;min-height:98px;padding:9px 12px!important;flex-direction:column;justify-content:center;align-items:center;gap:7px}
+.public-header .public-brand{flex:0 0 auto;justify-content:center}
+.public-header .public-header-actions{width:100%;min-width:0;justify-content:center;flex-wrap:wrap;gap:6px}
+.public-header .public-header-link,.public-header #pwa-install-btn{white-space:nowrap;min-height:36px}
+.public-header .public-game-link,.public-header .public-settings-button{width:36px;height:36px;flex-basis:36px}
+}
+@media (max-width:420px){
+.public-header .public-header-actions{justify-content:space-between;flex-wrap:nowrap;gap:4px}
+.public-header .public-header-link{padding-inline:8px;font-size:10px}
+.public-header #pwa-install-btn{width:36px;min-width:36px;padding:0;justify-content:center}
+.public-header #pwa-install-btn span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}

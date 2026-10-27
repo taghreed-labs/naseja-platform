@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\Profile;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+class RegisterController extends Controller
+{
+    public function create(Request $request)
+    {
+        $accountType = $request->query('type');
+
+        if (!in_array($accountType, ['provider', 'customer'], true)) {
+            return redirect()->route('start-register');
+        }
+
+        return view('frontend.auth.register', [
+            'accountType' => $accountType,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'account_type' => [
+                'required',
+                Rule::in(['provider', 'customer']),
+            ],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:users,email',
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            $role = Role::query()
+                ->where('slug', $validated['account_type'])
+                ->firstOrFail();
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            Profile::firstOrCreate([
+                'user_id' => $user->id,
+            ]);
+
+            $user->forceFill([
+                'approval_status' => $validated['account_type'] === 'provider'
+                    ? 'pending'
+                    : 'approved',
+            ])->save();
+
+            $user->roles()->syncWithoutDetaching([
+                $role->id,
+            ]);
+        });
+
+        $message = $validated['account_type'] === 'provider'
+            ? 'تم إنشاء حساب صاحب المهارة بنجاح. يمكنك تسجيل الدخول وتجهيز ملفك، وسيظهر للعامة بعد موافقة الإدارة.'
+            : 'تم إنشاء حساب العميل بنجاح. يمكنك تسجيل الدخول الآن وطلب الخدمات.';
+
+        return redirect()
+            ->route('login')
+            ->with('success', $message);
+    }
+}
